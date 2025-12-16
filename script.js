@@ -32,7 +32,6 @@ document.addEventListener('DOMContentLoaded', () => {
     renderSkills();
     initCharacterInputs();
     initAttacks();
-    loadCharacterFromStorage();
 });
 
 // ==========================
