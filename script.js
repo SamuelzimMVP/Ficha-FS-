@@ -48,6 +48,7 @@ const skills = [
 ];
 
 let character = {
+    id: null, // ← adicionado
     name: '',
     hpCurrent: 100,
     hpMax: 100,
@@ -258,6 +259,22 @@ document.addEventListener('click', e => {
         document.querySelectorAll('.modal').forEach(m => m.classList.remove('show'));
     }
 });
+function updateBars() {
+    const hpCurrent = character.hpCurrent || 0;
+    const hpMax = character.hpMax || 100;
+    const sanityCurrent = character.sanityCurrent || 0;
+    const sanityMax = character.sanityMax || 100;
+
+    const hpPercent = hpMax > 0 ? Math.min(100, Math.max(0, (hpCurrent / hpMax) * 100)) : 0;
+    const sanityPercent = sanityMax > 0 ? Math.min(100, Math.max(0, (sanityCurrent / sanityMax) * 100)) : 0;
+
+    // Só atualiza se os elementos existirem
+    const hpFill = document.getElementById("hp-fill");
+    const sanityFill = document.getElementById("sanity-fill");
+
+    if (hpFill) hpFill.style.width = `${hpPercent}%`;
+    if (sanityFill) sanityFill.style.width = `${sanityPercent}%`;
+}
 
 // ==========================
 // INPUTS DO PERSONAGEM
@@ -281,8 +298,16 @@ function initCharacterInputs() {
             character[key] = e.target.type === 'number'
                 ? Number(e.target.value) || 0
                 : e.target.value;
+
+            // ✅ Atualiza as barras SEMPRE que HP ou Sanidade mudar
+            if (['hpCurrent', 'hpMax', 'sanityCurrent', 'sanityMax'].includes(key)) {
+                updateBars();
+            }
         });
     });
+
+    // Atualiza as barras ao carregar
+    updateBars();
 }
 
 // ==========================
@@ -499,8 +524,6 @@ function renderLoadedCharacters() {
     loadedCharacters.forEach((p, id) => {
         const item = document.createElement("div");
         item.className = "character-item";
-
-        // Estilos principais: fundo preto, texto cinza, sombra vermelha
         item.style.cssText = `
             background-color: #000;
             color: #ccc;
@@ -517,7 +540,6 @@ function renderLoadedCharacters() {
         const sanity = `${p.sanity_current || 100} / ${p.sanity_max || 100}`;
         const mana = p.mana_blocks || 0;
 
-        // Destaque do nome em branco para contraste
         item.innerHTML = `
             <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 10px;">
                 <strong style="color: #fff; font-size: 1.15em;">${name}</strong>
@@ -532,25 +554,89 @@ function renderLoadedCharacters() {
                 <strong>Perícias:</strong> 
                 <span>${Array.isArray(p.skills) ? p.skills.slice(0, 3).map(s => s.name).join(', ') + (p.skills.length > 3 ? '...' : '') : 'Nenhuma'}</span>
             </div>
-            <button class="btn btn-primary" style="width: 100%; margin-top: 10px; background-color: #c00; border: none; color: white; padding: 8px; border-radius: 5px; font-weight: bold;">
-                📥 Usar este personagem
-            </button>
+
+            <!-- ✅ BARRA DE AÇÕES -->
+            <div style="display: flex; gap: 8px; margin-top: 12px;">
+                <button class="btn btn-primary" style="flex:1; background-color: #c00; border: none; color: white; padding: 6px; border-radius: 4px; font-weight: bold;" data-id="${id}">
+                    📥 Usar
+                </button>
+                <button class="btn btn-secondary delete-char" style="flex:1; background-color: #555; border: none; color: #ff6666; padding: 6px; border-radius: 4px;" data-id="${id}">
+                    🗑️ Deletar
+                </button>
+                <button class="btn btn-secondary refresh-char" style="flex:1; background-color: #444; border: none; color: #4ade80; padding: 6px; border-radius: 4px;" data-id="${id}">
+                    🔄 Atualizar
+                </button>
+            </div>
         `;
 
-        const useBtn = item.querySelector('button');
-        useBtn.addEventListener('click', () => {
+        // Botão "Usar"
+        item.querySelector('button[data-id]').addEventListener('click', () => {
             applyCharacterToSheet(p);
+        });
+
+        // Botão "Deletar"
+        item.querySelector('.delete-char').addEventListener('click', () => {
+            if (confirm(`Remover "${name}" da sua lista local?`)) {
+                loadedCharacters.delete(id);
+                saveLoadedCharactersToStorage();
+                renderLoadedCharacters();
+            }
+        });
+
+        // Botão "Atualizar"
+        item.querySelector('.refresh-char').addEventListener('click', async () => {
+            try {
+                const res = await fetch(`${API_URL}/personagens/${id}`);
+                if (!res.ok) throw new Error("Não encontrado");
+                const freshData = await res.json();
+
+                // Atualiza no Map
+                loadedCharacters.set(id, freshData);
+                saveLoadedCharactersToStorage();
+                renderLoadedCharacters();
+
+                alert("✅ Personagem atualizado!");
+            } catch (err) {
+                alert("❌ Falha ao atualizar personagem.");
+                console.error(err);
+            }
         });
 
         list.appendChild(item);
     });
 }
+document.getElementById("refresh-all")?.addEventListener("click", async () => {
+    if (loadedCharacters.size === 0) {
+        alert("Nenhum personagem para atualizar.");
+        return;
+    }
+
+    const ids = Array.from(loadedCharacters.keys());
+    let successCount = 0;
+
+    for (const id of ids) {
+        try {
+            const res = await fetch(`${API_URL}/personagens/${id}`);
+            if (res.ok) {
+                const fresh = await res.json();
+                loadedCharacters.set(id, fresh);
+                successCount++;
+            }
+        } catch (e) {
+            console.warn(`Falha ao atualizar ID ${id}`, e);
+        }
+    }
+
+    saveLoadedCharactersToStorage();
+    renderLoadedCharacters();
+    alert(`✅ ${successCount} personagem(s) atualizado(s)!`);
+});
 
 // Aplica o personagem à ficha ativa
-async function applyCharacterToSheet(p) {
+function applyCharacterToSheet(p) {
     try {
-        // Atualiza o objeto global
         character = {
+            id: p.id || null,
             name: p.name || '',
             hpCurrent: p.hp_current || 100,
             hpMax: p.hp_max || 100,
@@ -560,6 +646,7 @@ async function applyCharacterToSheet(p) {
             skills: {}
         };
 
+        // Reseta perícias
         skills.forEach(s => character.skills[s] = 40);
         if (Array.isArray(p.skills)) {
             p.skills.forEach(s => {
@@ -569,6 +656,7 @@ async function applyCharacterToSheet(p) {
             });
         }
 
+        // Ataques
         attacks = [];
         if (Array.isArray(p.attacks)) {
             attacks = p.attacks.map(atk => ({
@@ -592,13 +680,21 @@ async function applyCharacterToSheet(p) {
 
         renderSkills();
         renderAttacks();
+        updateBars(); // se você tiver as barras de vida/sanidade
 
-        // Muda para a aba de criação
+        // ✅ MUDA O TEXTO DO BOTÃO PARA "ATUALIZAR"
+        const saveBtn = document.getElementById("save-character");
+        if (saveBtn && character.id) {
+            saveBtn.textContent = "🔄 Atualizar Ficha";
+            saveBtn.title = "Atualizar personagem no banco de dados";
+        }
+
+        // Vai para a aba de criação
         document.querySelector('.nav-btn[data-page="character"]').click();
-        alert("✅ Personagem aplicado com sucesso!");
+        alert("✅ Personagem carregado!");
     } catch (err) {
         console.error(err);
-        alert("❌ Erro ao aplicar personagem.");
+        alert("❌ Erro ao carregar personagem.");
     }
 }
 
@@ -663,15 +759,22 @@ async function carregarPersonagemPeloId(id) {
 }
 
 async function salvarPersonagem() {
+    // Validação mínima
+    if (!character.name?.trim()) {
+        alert("❌ Nome é obrigatório.");
+        return;
+    }
+
+    // ✅ Formato MÍNIMO que o backend geralmente aceita
     const personagem = {
-        name: character.name,
-        hpCurrent: character.hpCurrent,
-        hpMax: character.hpMax,
-        sanityCurrent: character.sanityCurrent,
-        sanityMax: character.sanityMax,
-        manaBlocks: character.manaBlocks,
-        skills: character.skills,
-        attacks: attacks
+        name: character.name.trim(),
+        hp_current: Math.max(0, Number(character.hpCurrent) || 0),
+        hp_max: Math.max(1, Number(character.hpMax) || 100),
+        sanity_current: Math.max(0, Number(character.sanityCurrent) || 0),
+        sanity_max: Math.max(1, Number(character.sanityMax) || 100),
+        mana_blocks: Math.max(0, Number(character.manaBlocks) || 0),
+        skills: [], // ←←← ENVIAR VAZIO PRIMEIRO PARA TESTAR
+        attacks: [] // ←←← ENVIAR VAZIO PRIMEIRO PARA TESTAR
     };
 
     try {
@@ -682,18 +785,20 @@ async function salvarPersonagem() {
         });
 
         const data = await res.json();
+
         if (!res.ok) {
-            alert(data.erro || "Erro ao salvar personagem");
+            console.error("Resposta do backend:", data);
+            alert("❌ Erro: " + (data.erro || data.message || "Dados inválidos"));
             return;
         }
-        alert("✅ Personagem salvo com sucesso!");
-        carregarPersonagensSalvos(); // atualiza a lista automaticamente
+
+        character.id = data.id;
+        alert("✅ Salvo com sucesso!");
     } catch (e) {
-        console.error(e);
-        alert("❌ Erro ao conectar com o backend");
+        console.error("Erro de rede:", e);
+        alert("❌ Sem conexão com o servidor.");
     }
 }
-
 // ==========================
 // LISTA DE PERSONAGENS SALVOS
 // ==========================
@@ -787,3 +892,32 @@ async function carregarPersonagensSalvos() {
 
 // Atualizar lista ao clicar em "Atualizar"
 document.getElementById("refresh-characters")?.addEventListener("click", carregarPersonagensSalvos);
+
+document.getElementById("clear-character")?.addEventListener("click", () => {
+    character = {
+        id: null,
+        name: '',
+        hpCurrent: 100,
+        hpMax: 100,
+        sanityCurrent: 100,
+        sanityMax: 100,
+        manaBlocks: 0,
+        skills: {}
+    };
+    skills.forEach(s => character.skills[s] = 40);
+    attacks = [];
+    
+    // Atualiza UI
+    initCharacterInputs();
+    renderSkills();
+    renderAttacks();
+    updateBars();
+
+    // ✅ Volta o botão ao modo "Salvar Novo"
+    const saveBtn = document.getElementById("save-character");
+    if (saveBtn) {
+        saveBtn.textContent = "💾 Salvar Novo Personagem";
+    }
+
+    alert("Ficha limpa.");
+});
