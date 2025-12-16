@@ -1,0 +1,66 @@
+@media (max-width: 480px) {
+
+  /* Header */
+  header .container {
+    flex-direction: column;
+    gap: 0.8rem;
+  }
+
+  .logo {
+    font-size: 1.3rem;
+    text-align: center;
+  }
+
+  nav {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .nav-btn {
+    width: 100%;
+    text-align: center;
+  }
+
+  /* Títulos */
+  .hero-title {
+    font-size: 1.9rem;
+  }
+
+  .page-title {
+    font-size: 1.7rem;
+  }
+
+  /* Cards */
+  .card {
+    padding: 1rem;
+  }
+
+  /* Grids */
+  .skills-grid,
+  .vital-stats,
+  .info-cards {
+    grid-template-columns: 1fr;
+  }
+
+  /* Botões */
+  .button-group {
+    flex-direction: column;
+  }
+
+  .button-group .btn {
+    width: 100%;
+  }
+
+  /* Inputs */
+  input,
+  textarea {
+    font-size: 16px; /* evita zoom no iOS */
+  }
+
+  /* Modais */
+  .modal-content {
+    padding: 1.2rem;
+    width: 95%;
+  }
+
+}

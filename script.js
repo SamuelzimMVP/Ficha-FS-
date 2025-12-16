@@ -21,27 +21,31 @@ let character = {
     skills: {}
 };
 
+let attacks = [];
+let tempDice = [];
+let selectedCharacterId = null;
+
 skills.forEach(s => character.skills[s] = 40);
 
 // ==========================
 // INICIALIZAÇÃO
 // ==========================
 document.addEventListener("DOMContentLoaded", () => {
-  initNavigation();
-  initCharacterTabs();
-  renderSkills();
-  initCharacterInputs();
-  initAttacks();
-
-  document
-    .getElementById("save-character")
-    ?.addEventListener("click", salvarPersonagem);
-
-  document
-    .getElementById("load-character")
-    ?.addEventListener("click", carregarPersonagem);
+    initNavigation();
+    initCharacterTabs();
+    renderSkills();
+    initCharacterInputs();
+    initAttacks();
+    initSaveLoadButtons();
 });
 
+function initSaveLoadButtons() {
+    const saveBtn = document.getElementById("save-character");
+    const loadBtn = document.getElementById("load-character");
+
+    if (saveBtn) saveBtn.addEventListener("click", salvarPersonagem);
+    if (loadBtn) loadBtn.addEventListener("click", carregarPersonagem);
+}
 
 // ==========================
 // NAVEGAÇÃO PRINCIPAL
@@ -94,7 +98,7 @@ function renderSkills() {
 
         div.innerHTML = `
             <label>${skill}</label>
-            <input type="number" min="0" max="100" value="${character.skills[skill]}" data-skill="${skill}">
+            <input type="number" min="0" max="100" value="${character.skills[skill] ?? 40}" data-skill="${skill}">
             <button class="dice-btn" data-skill="${skill}">🎲</button>
         `;
 
@@ -117,9 +121,10 @@ function renderSkills() {
 // ==========================
 // ROLAGEM DE PERÍCIA
 // ==========================
-function rollDice(sides) {
+function rollDice(sides = 100) {
     return Math.floor(Math.random() * sides) + 1;
 }
+
 function getCritThreshold(skill) {
     if (skill >= 90) return 5;
     if (skill >= 76) return 4;
@@ -130,9 +135,10 @@ function getCritThreshold(skill) {
 }
 
 function evaluateSkillRoll(roll, skillValue) {
+    if (skillValue <= 0) return { success: false, good: false, extreme: false, crit: false, critThreshold: 0 };
+
     const extreme = Math.floor(skillValue / 3);
     const good = Math.floor((skillValue * 2) / 3);
-
     const critThreshold = getCritThreshold(skillValue);
     const isCrit = roll <= critThreshold && critThreshold > 0;
 
@@ -146,8 +152,9 @@ function evaluateSkillRoll(roll, skillValue) {
 }
 
 function quickRollSkill(skill) {
-    const skillValue = character.skills[skill];
-    const mod = Number(document.getElementById('advantage-mod')?.value) || 0;
+    const skillValue = character.skills[skill] ?? 40;
+    const modInput = document.getElementById('advantage-mod');
+    const mod = modInput ? Number(modInput.value) || 0 : 0;
 
     let rolls = [];
     let finalRoll;
@@ -162,10 +169,8 @@ function quickRollSkill(skill) {
     }
 
     const result = evaluateSkillRoll(finalRoll, skillValue);
-
     showQuickRollModal(skill, finalRoll, skillValue, result, rolls, mod);
 }
-
 
 function showQuickRollModal(skillName, roll, skillValue, result, rolls = [], mod = 0) {
     const modal = document.getElementById('quick-roll-modal');
@@ -208,8 +213,7 @@ function showQuickRollModal(skillName, roll, skillValue, result, rolls = [], mod
     modal.classList.add('show');
 }
 
-
-// Fechar modal
+// Fechar modais
 document.addEventListener('click', e => {
     if (e.target.classList.contains('modal') || e.target.classList.contains('close-modal')) {
         document.querySelectorAll('.modal').forEach(m => m.classList.remove('show'));
@@ -229,13 +233,14 @@ function initCharacterInputs() {
         'mana-blocks': 'manaBlocks'
     };
 
-    Object.keys(map).forEach(id => {
+    Object.entries(map).forEach(([id, key]) => {
         const el = document.getElementById(id);
         if (!el) return;
 
-        el.addEventListener('change', e => {
-            character[map[id]] = e.target.type === 'number'
-                ? Number(e.target.value)
+        el.value = character[key] ?? (typeof character[key] === 'number' ? 0 : '');
+        el.addEventListener('input', e => {
+            character[key] = e.target.type === 'number'
+                ? Number(e.target.value) || 0
                 : e.target.value;
         });
     });
@@ -244,9 +249,6 @@ function initCharacterInputs() {
 // ==========================
 // ATAQUES
 // ==========================
-let attacks = [];
-let tempDice = [];
-
 function initAttacks() {
     const addBtn = document.getElementById('add-attack-btn');
     const modal = document.getElementById('attack-modal');
@@ -258,89 +260,28 @@ function initAttacks() {
 
     addBtn.onclick = () => modal.classList.add('show');
     closeBtn.onclick = () => modal.classList.remove('show');
-
     addDiceBtn.onclick = addTempDice;
     saveBtn.onclick = saveAttack;
 }
 
 function addTempDice() {
-    const qty = Number(document.getElementById('dice-qty').value);
-    const sides = Number(document.getElementById('dice-sides').value);
+    const qtyEl = document.getElementById('dice-qty');
+    const sidesEl = document.getElementById('dice-sides');
+    const qty = Number(qtyEl?.value) || 0;
+    const sides = Number(sidesEl?.value) || 0;
 
-    if (!qty || !sides) return alert('Preencha quantidade e lados');
+    if (!qty || !sides || qty <= 0 || sides < 2) {
+        alert('Preencha quantidade (≥1) e lados (≥2)');
+        return;
+    }
 
     tempDice.push({ qty, sides });
     renderTempDice();
 }
 
-function showDamageResult(name, rolls, total, guaranteed) {
-    const grouped = {};
-
-    rolls.forEach(r => {
-        if (!grouped[r.sides]) grouped[r.sides] = [];
-        grouped[r.sides].push(r.value);
-    });
-    let summaryHTML = "";
-    let detailsHTML = "";
-
-    for (const sides in grouped) {
-        summaryHTML += `<div>• ${grouped[sides].length}d${sides}</div>`;
-        detailsHTML += `
-            <div class="damage-details">
-                <strong>D${sides}</strong>: ${grouped[sides].join(", ")}
-            </div>
-        `;
-    }
-    const modal = document.getElementById("damage-result-modal");
-    const content = document.getElementById("damage-result-content");
-
-    let diceHTML = "";
-
-    rolls.forEach(r => {
-        diceHTML += `
-            <div class="attack-die">
-                D${r.sides}<br>${r.value}
-            </div>
-        `;
-    });
-
-    content.innerHTML = `
-    <div class="attack-title">${name}</div>
-
-    <div class="damage-summary">
-        <h4>🎲 Dados</h4>
-        ${summaryHTML}
-    </div>
-
-    <div class="attack-flat">
-        💠 Dano Garantido: +${guaranteed}
-    </div>
-
-    <div class="attack-total">
-        💥 TOTAL: ${total}
-    </div>
-
-    <button class="btn btn-secondary" id="toggle-details">
-        Ver detalhes dos dados
-    </button>
-
-    <div id="damage-details-box" style="display:none;">
-        ${detailsHTML}
-    </div>
-    `;
-    document.getElementById("toggle-details").onclick = () => {
-        const box = document.getElementById("damage-details-box");
-        box.style.display = box.style.display === "none" ? "block" : "none";
-    };
-
-
-    modal.classList.add("show");
-}
-
-
-
 function renderTempDice() {
     const list = document.getElementById('dice-list');
+    if (!list) return;
     list.innerHTML = '';
 
     tempDice.forEach((d, i) => {
@@ -348,28 +289,40 @@ function renderTempDice() {
         div.className = 'skill-item';
         div.innerHTML = `
             ${d.qty}d${d.sides}
-            <button onclick="removeTempDice(${i})">✖</button>
+            <button class="remove-dice" data-index="${i}">✖</button>
         `;
         list.appendChild(div);
     });
-}
 
-function removeTempDice(i) {
-    tempDice.splice(i, 1);
-    renderTempDice();
+    list.querySelectorAll('.remove-dice').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const idx = Number(btn.dataset.index);
+            tempDice.splice(idx, 1);
+            renderTempDice();
+        });
+    });
 }
 
 function saveAttack() {
-    const name = document.getElementById('attack-name').value;
-    const desc = document.getElementById('attack-desc').value;
-    const flat = Number(document.getElementById('attack-flat').value);
+    const nameEl = document.getElementById('attack-name');
+    const descEl = document.getElementById('attack-desc');
+    const flatEl = document.getElementById('attack-flat');
+
+    const name = nameEl?.value?.trim();
+    const desc = descEl?.value?.trim() || '';
+    const flat = Number(flatEl?.value) || 0;
 
     if (!name || tempDice.length === 0) {
-        return alert('Nome e dados são obrigatórios');
+        alert('Nome e pelo menos um dado são obrigatórios');
+        return;
     }
 
     attacks.push({ name, desc, flat, dice: [...tempDice] });
     tempDice = [];
+    nameEl.value = '';
+    descEl.value = '';
+    flatEl.value = '0';
+    document.getElementById('dice-list').innerHTML = '';
 
     document.getElementById('attack-modal').classList.remove('show');
     renderAttacks();
@@ -377,6 +330,7 @@ function saveAttack() {
 
 function renderAttacks() {
     const list = document.getElementById('attack-list');
+    if (!list) return;
     list.innerHTML = '';
 
     attacks.forEach((atk, i) => {
@@ -388,145 +342,331 @@ function renderAttacks() {
             <h4>${atk.name}</h4>
             <p>${atk.desc || ''}</p>
             <p><strong>${diceText} + ${atk.flat}</strong></p>
-            <button onclick="rollAttack(${i})">🎲 Rolar</button>
+            <button class="btn btn-secondary" onclick="rollAttack(${i})">🎲 Rolar</button>
         `;
 
         list.appendChild(div);
     });
 }
 
-function rollAttack(index) {
+window.rollAttack = function(index) {
     const attack = attacks[index];
-
     let totalDamage = attack.flat;
     let rollsArray = [];
 
     attack.dice.forEach(d => {
         for (let i = 0; i < d.qty; i++) {
-            const roll = Math.floor(Math.random() * d.sides) + 1;
+            const roll = rollDice(d.sides);
             totalDamage += roll;
-
-            rollsArray.push({
-                sides: d.sides,
-                value: roll
-            });
+            rollsArray.push({ sides: d.sides, value: roll });
         }
     });
 
-    showDamageResult(
-        attack.name,
-        rollsArray,
-        totalDamage,
-        attack.flat
-    );
+    showDamageResult(attack.name, rollsArray, totalDamage, attack.flat);
+};
+
+function showDamageResult(name, rolls, total, guaranteed) {
+    const grouped = {};
+    rolls.forEach(r => {
+        if (!grouped[r.sides]) grouped[r.sides] = [];
+        grouped[r.sides].push(r.value);
+    });
+
+    let detailsHTML = "";
+    for (const sides in grouped) {
+        detailsHTML += `<div><strong>D${sides}</strong>: ${grouped[sides].join(", ")}</div>`;
+    }
+
+    const modal = document.getElementById("damage-result-modal");
+    const content = document.getElementById("damage-result-content");
+
+    content.innerHTML = `
+        <div class="attack-title">${name}</div>
+        <div class="attack-total">💥 TOTAL: ${total}</div>
+        <div class="attack-flat">💠 Dano Garantido: +${guaranteed}</div>
+        <button class="btn btn-secondary" id="toggle-details">Ver detalhes dos dados</button>
+        <div id="damage-details-box" style="display:none;">${detailsHTML}</div>
+    `;
+
+    document.getElementById("toggle-details").onclick = () => {
+        const box = document.getElementById("damage-details-box");
+        box.style.display = box.style.display === "none" ? "block" : "none";
+    };
+
+    modal.classList.add("show");
 }
 
-
-function closeDamageModal() {
-    document.getElementById('damage-modal').classList.remove('show');
-}
-
+// ==========================
+// SALVAR E CARREGAR
+// ==========================
 const API_URL = "https://ficha-insana.vercel.app";
 
+async function carregarPersonagem() {
+    const idInput = document.getElementById("character-id");
+    const id = Number(idInput?.value);
 
+    if (!id || id <= 0 || !Number.isInteger(id)) {
+        alert("Por favor, digite um ID válido (número inteiro positivo).");
+        return;
+    }
+
+    try {
+        const res = await fetch(`${API_URL}/personagens/${id}`);
+        if (!res.ok) {
+            const errorData = await res.json().catch(() => ({}));
+            throw new Error(errorData.erro || "Personagem não encontrado");
+        }
+
+        const p = await res.json();
+
+        // Preenche o painel de detalhes
+        const detailPanel = document.getElementById("character-detail");
+        detailPanel.style.display = "block";
+
+        document.getElementById("detail-name").textContent = p.name || "Sem nome";
+        document.getElementById("detail-hp").textContent = `${p.hp_current || 100} / ${p.hp_max || 100}`;
+        document.getElementById("detail-sanity").textContent = `${p.sanity_current || 100} / ${p.sanity_max || 100}`;
+        document.getElementById("detail-mana").textContent = p.mana_blocks || 0;
+
+        // Perícias — com cor legível
+        const skillsDiv = document.getElementById("detail-skills");
+        skillsDiv.innerHTML = "";
+        if (Array.isArray(p.skills)) {
+            p.skills.forEach(s => {
+                const el = document.createElement("div");
+                el.className = "preview-skill";
+                el.textContent = `${s.name}: ${s.value}`;
+                el.style.color = "#222"; // ✅ Cor corrigida
+                el.style.margin = "0.25rem 0";
+                skillsDiv.appendChild(el);
+            });
+        }
+
+        // Ataques — com cor legível
+        const attacksDiv = document.getElementById("detail-attacks");
+        attacksDiv.innerHTML = "";
+        if (Array.isArray(p.attacks) && p.attacks.length > 0) {
+            p.attacks.forEach(atk => {
+                const el = document.createElement("div");
+                el.className = "preview-attack";
+                el.style.color = "#222"; // ✅ Cor corrigida
+                el.style.margin = "0.35rem 0";
+                const diceText = atk.dice?.map(d => `${d.quantity}d${d.sides}`).join(" + ") || "";
+                // Mantém o nome em negrito, mas com cor escura
+                el.innerHTML = `<strong style="color:#222;">${atk.name}</strong>: ${diceText} + ${atk.flat_damage || 0}`;
+                attacksDiv.appendChild(el);
+            });
+        } else {
+            const noAttack = document.createElement("p");
+            noAttack.textContent = "Nenhum ataque";
+            noAttack.style.color = "#666"; // texto secundário em cinza
+            attacksDiv.appendChild(noAttack);
+        }
+
+        // Atualiza o ID salvo para o botão de carregar
+        selectedCharacterId = p.id;
+
+        // Configura o botão "Carregar este Personagem"
+        const loadBtn = document.getElementById("load-saved-character");
+        if (loadBtn) {
+            const newBtn = loadBtn.cloneNode(true);
+            loadBtn.parentNode.replaceChild(newBtn, loadBtn);
+            newBtn.addEventListener("click", () => {
+                if (selectedCharacterId) {
+                    carregarPersonagemPeloId(selectedCharacterId);
+                }
+            });
+        }
+
+        alert("✅ Personagem encontrado! Clique em 'Carregar este Personagem' para usá-lo.");
+    } catch (err) {
+        console.error("Erro ao carregar personagem:", err);
+        alert("❌ " + (err.message || "Erro ao carregar personagem."));
+    }
+}
+
+// Nova função auxiliar para carregar diretamente pelo ID
+async function carregarPersonagemPeloId(id) {
+    try {
+        const res = await fetch(`${API_URL}/personagens/${id}`);
+        if (!res.ok) throw new Error("Personagem não encontrado");
+        const p = await res.json();
+
+        // Atualiza o objeto character global
+        character = {
+            name: p.name || '',
+            hpCurrent: p.hp_current || 100,
+            hpMax: p.hp_max || 100,
+            sanityCurrent: p.sanity_current || 100,
+            sanityMax: p.sanity_max || 100,
+            manaBlocks: p.mana_blocks || 0,
+            skills: {}
+        };
+
+        skills.forEach(s => character.skills[s] = 40);
+        if (Array.isArray(p.skills)) {
+            p.skills.forEach(s => {
+                if (s.name && character.skills.hasOwnProperty(s.name)) {
+                    character.skills[s.name] = s.value ?? 40;
+                }
+            });
+        }
+
+        attacks = [];
+        if (Array.isArray(p.attacks)) {
+            attacks = p.attacks.map(atk => ({
+                name: atk.name || 'Ataque sem nome',
+                desc: atk.description || '',
+                flat: atk.flat_damage || 0,
+                dice: (atk.dice || []).map(d => ({
+                    qty: d.quantity || 1,
+                    sides: d.sides || 6
+                }))
+            }));
+        }
+
+        // Atualiza a UI
+        document.getElementById("char-name").value = character.name;
+        document.getElementById("hp-current").value = character.hpCurrent;
+        document.getElementById("hp-max").value = character.hpMax;
+        document.getElementById("sanity-current").value = character.sanityCurrent;
+        document.getElementById("sanity-max").value = character.sanityMax;
+        document.getElementById("mana-blocks").value = character.manaBlocks;
+
+        renderSkills();
+        renderAttacks();
+
+        // Vai para a aba de personagem
+        document.querySelector('.nav-btn[data-page="character"]').click();
+        alert("✅ Personagem carregado com sucesso!");
+    } catch (err) {
+        console.error("Erro ao carregar personagem:", err);
+        alert("❌ Erro ao carregar personagem.");
+    }
+}
 
 async function salvarPersonagem() {
-  const personagem = {
-    name: character.name,
-    hpCurrent: character.hpCurrent,
-    hpMax: character.hpMax,
-    sanityCurrent: character.sanityCurrent,
-    sanityMax: character.sanityMax,
-    manaBlocks: character.manaBlocks,
-    skills: character.skills,
-    attacks: attacks
-  };
+    const personagem = {
+        name: character.name,
+        hpCurrent: character.hpCurrent,
+        hpMax: character.hpMax,
+        sanityCurrent: character.sanityCurrent,
+        sanityMax: character.sanityMax,
+        manaBlocks: character.manaBlocks,
+        skills: character.skills,
+        attacks: attacks
+    };
 
-  try {
-    const res = await fetch(`${API_URL}/personagens`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(personagem)
-    });
+    try {
+        const res = await fetch(`${API_URL}/personagens`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(personagem)
+        });
 
-    const data = await res.json();
-
-    if (!res.ok) {
-      alert(data.erro || "Erro ao salvar personagem");
-      return;
+        const data = await res.json();
+        if (!res.ok) {
+            alert(data.erro || "Erro ao salvar personagem");
+            return;
+        }
+        alert("✅ Personagem salvo com sucesso!");
+        carregarPersonagensSalvos(); // atualiza a lista automaticamente
+    } catch (e) {
+        console.error(e);
+        alert("❌ Erro ao conectar com o backend");
     }
-
-    alert("✅ Personagem salvo com sucesso!");
-  } catch (e) {
-    console.error(e);
-    alert("❌ Erro ao conectar com o backend");
-  }
 }
 
+// ==========================
+// LISTA DE PERSONAGENS SALVOS
+// ==========================
+async function carregarPersonagensSalvos() {
+    const list = document.getElementById("saved-character-list");
+    const detailPanel = document.getElementById("character-detail");
+    if (!list) return;
 
+    try {
+        const res = await fetch(`${API_URL}/personagens`);
+        if (!res.ok) throw new Error("Falha ao buscar personagens");
 
-async function carregarPersonagem() {
-  const id = Number(document.getElementById("character-id").value);
+        const personagens = await res.json();
+        list.innerHTML = "";
 
-  if (!id) {
-    alert("Digite um ID válido");
-    return;
-  }
+        if (!Array.isArray(personagens) || personagens.length === 0) {
+            list.innerHTML = "<p>Nenhum personagem salvo.</p>";
+            detailPanel.style.display = "none";
+            return;
+        }
 
-  try {
-    const resposta = await fetch(`${API_URL}/personagens/${id}`);
+        personagens.forEach(p => {
+            const item = document.createElement("div");
+            item.className = "character-item";
+            item.style.cursor = "pointer";
+            item.style.padding = "0.5rem";
+            item.style.borderBottom = "1px solid #eee";
 
-    if (!resposta.ok) {
-      throw new Error("Personagem não encontrado");
+            item.innerHTML = `
+                <strong>${p.name || "Sem nome"}</strong>
+                <div class="character-id">ID: ${p.id}</div>
+            `;
+
+            item.addEventListener("click", () => {
+                detailPanel.style.display = "block";
+
+                document.getElementById("detail-name").textContent = p.name || "Sem nome";
+                document.getElementById("detail-hp").textContent = `${p.hp_current || 100} / ${p.hp_max || 100}`;
+                document.getElementById("detail-sanity").textContent = `${p.sanity_current || 100} / ${p.sanity_max || 100}`;
+                document.getElementById("detail-mana").textContent = p.mana_blocks || 0;
+
+                const skillsDiv = document.getElementById("detail-skills");
+                skillsDiv.innerHTML = "";
+                if (Array.isArray(p.skills)) {
+                    p.skills.forEach(s => {
+                        const el = document.createElement("div");
+                        el.className = "preview-skill";
+                        el.textContent = `${s.name}: ${s.value}`;
+                        skillsDiv.appendChild(el);
+                    });
+                }
+
+                const attacksDiv = document.getElementById("detail-attacks");
+                attacksDiv.innerHTML = "";
+                if (Array.isArray(p.attacks) && p.attacks.length > 0) {
+                    p.attacks.forEach(atk => {
+                        const el = document.createElement("div");
+                        el.className = "preview-attack";
+                        const diceText = atk.dice?.map(d => `${d.quantity}d${d.sides}`).join(" + ") || "";
+                        el.innerHTML = `<strong>${atk.name}</strong>: ${diceText} + ${atk.flat_damage || 0}`;
+                        attacksDiv.appendChild(el);
+                    });
+                } else {
+                    attacksDiv.innerHTML = "<p>Nenhum ataque</p>";
+                }
+
+                selectedCharacterId = p.id;
+
+                const loadBtn = document.getElementById("load-saved-character");
+                if (loadBtn) {
+                    const newBtn = loadBtn.cloneNode(true);
+                    loadBtn.parentNode.replaceChild(newBtn, loadBtn);
+                    newBtn.addEventListener("click", () => {
+                        if (selectedCharacterId) {
+                            const idField = document.getElementById("character-id");
+                            if (idField) idField.value = selectedCharacterId;
+                            carregarPersonagem();
+                        }
+                    });
+                }
+            });
+
+            list.appendChild(item);
+        });
+    } catch (err) {
+        console.error(err);
+        list.innerHTML = "<p>❌ Erro ao carregar personagens.</p>";
+        detailPanel.style.display = "none";
     }
-
-    const p = await resposta.json();
-    console.log("Personagem carregado:", p);
-
-    // ===== MAPEAR CAMPOS =====
-    character.name = p.name;
-    character.hpCurrent = p.hp_current;
-    character.hpMax = p.hp_max;
-    character.sanityCurrent = p.sanity_current;
-    character.sanityMax = p.sanity_max;
-    character.manaBlocks = p.mana_blocks;
-
-    // ===== MAPEAR PERÍCIAS =====
-    character.skills = {};
-    skills.forEach(s => character.skills[s] = 40); // default
-
-    p.skills.forEach(s => {
-      character.skills[s.name] = s.value;
-    });
-
-    // ===== MAPEAR ATAQUES =====
-    attacks = p.attacks.map(atk => ({
-      name: atk.name,
-      desc: atk.description,
-      flat: atk.flat_damage,
-      dice: atk.dice.map(d => ({
-        qty: d.quantity,
-        sides: d.sides
-      }))
-    }));
-
-    // ===== ATUALIZAR INPUTS =====
-    document.getElementById("char-name").value = character.name;
-    document.getElementById("hp-current").value = character.hpCurrent;
-    document.getElementById("hp-max").value = character.hpMax;
-    document.getElementById("sanity-current").value = character.sanityCurrent;
-    document.getElementById("sanity-max").value = character.sanityMax;
-    document.getElementById("mana-blocks").value = character.manaBlocks;
-
-    // ===== RENDERIZAR TELA =====
-    renderSkills();
-    renderAttacks();
-
-    alert("✅ Personagem carregado com sucesso!");
-  } catch (erro) {
-    console.error(erro);
-    alert("❌ Erro ao carregar personagem");
-  }
 }
+
+// Atualizar lista ao clicar em "Atualizar"
+document.getElementById("refresh-characters")?.addEventListener("click", carregarPersonagensSalvos);
