@@ -26,13 +26,22 @@ skills.forEach(s => character.skills[s] = 40);
 // ==========================
 // INICIALIZAÇÃO
 // ==========================
-document.addEventListener('DOMContentLoaded', () => {
-    initNavigation();
-    initCharacterTabs();
-    renderSkills();
-    initCharacterInputs();
-    initAttacks();
+document.addEventListener("DOMContentLoaded", () => {
+  initNavigation();
+  initCharacterTabs();
+  renderSkills();
+  initCharacterInputs();
+  initAttacks();
+
+  document
+    .getElementById("save-character")
+    ?.addEventListener("click", salvarPersonagem);
+
+  document
+    .getElementById("load-character")
+    ?.addEventListener("click", carregarPersonagem);
 });
+
 
 // ==========================
 // NAVEGAÇÃO PRINCIPAL
@@ -419,11 +428,7 @@ function closeDamageModal() {
 
 const API_URL = "https://ficha-insana.vercel.app";
 
-document.addEventListener("DOMContentLoaded", () => {
-  document
-    .getElementById("save-character")
-    .addEventListener("click", salvarPersonagem);
-});
+
 
 async function salvarPersonagem() {
   const personagem = {
@@ -461,9 +466,6 @@ async function salvarPersonagem() {
 }
 
 
-document
-  .getElementById("load-character")
-  .addEventListener("click", carregarPersonagem());
 
 async function carregarPersonagem() {
   const id = Number(document.getElementById("character-id").value);
