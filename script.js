@@ -692,6 +692,7 @@ function applyCharacterToSheet(p) {
         // Vai para a aba de criação
         document.querySelector('.nav-btn[data-page="character"]').click();
         alert("✅ Personagem carregado!");
+        atualizarBotaoSalvar();
     } catch (err) {
         console.error(err);
         alert("❌ Erro ao carregar personagem.");
@@ -758,23 +759,27 @@ async function carregarPersonagemPeloId(id) {
     }
 }
 
-async function salvarPersonagem() {
-    // Validação mínima
-    if (!character.name?.trim()) {
-        alert("❌ Nome é obrigatório.");
-        return;
-    }
+function atualizarBotaoSalvar() {
+    const botao = document.getElementById("save-character");
+    if (!botao) return; // sai se o botão não existir
 
-    // ✅ Formato MÍNIMO que o backend geralmente aceita
+    if (character.id) {
+        botao.textContent = "🔄 Atualizar Ficha";
+    } else {
+        botao.textContent = "💾 Salvar Novo Personagem";
+    }
+}
+
+async function salvarPersonagem() {
     const personagem = {
-        name: character.name.trim(),
-        hp_current: Math.max(0, Number(character.hpCurrent) || 0),
-        hp_max: Math.max(1, Number(character.hpMax) || 100),
-        sanity_current: Math.max(0, Number(character.sanityCurrent) || 0),
-        sanity_max: Math.max(1, Number(character.sanityMax) || 100),
-        mana_blocks: Math.max(0, Number(character.manaBlocks) || 0),
-        skills: [], // ←←← ENVIAR VAZIO PRIMEIRO PARA TESTAR
-        attacks: [] // ←←← ENVIAR VAZIO PRIMEIRO PARA TESTAR
+        name: character.name,
+        hpCurrent: character.hpCurrent,
+        hpMax: character.hpMax,
+        sanityCurrent: character.sanityCurrent,
+        sanityMax: character.sanityMax,
+        manaBlocks: character.manaBlocks,
+        skills: character.skills,
+        attacks: attacks
     };
 
     try {
@@ -787,18 +792,36 @@ async function salvarPersonagem() {
         const data = await res.json();
 
         if (!res.ok) {
-            console.error("Resposta do backend:", data);
-            alert("❌ Erro: " + (data.erro || data.message || "Dados inválidos"));
+            alert(data.erro || "Erro ao salvar personagem");
             return;
         }
 
-        character.id = data.id;
-        alert("✅ Salvo com sucesso!");
+        // ✅ 1. Salva o ID retornado pelo backend
+        if (data.id) {
+            character.id = data.id;
+        }
+
+        // ✅ 2. Atualiza o botão para "Atualizar Ficha"
+        atualizarBotaoSalvar();
+
+        // ✅ 3. Redireciona para a aba "Personagens Salvos"
+        const savedTab = document.querySelector('.nav-btn[data-page="saved-characters"]');
+        if (savedTab) {
+            // Remove 'active' de todas as abas
+            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            // Ativa a aba correta
+            savedTab.classList.add('active');
+            document.getElementById('saved-characters')?.classList.add('active');
+        }
+
+        alert("✅ Personagem salvo com sucesso!");
     } catch (e) {
-        console.error("Erro de rede:", e);
-        alert("❌ Sem conexão com o servidor.");
+        console.error(e);
+        alert("❌ Erro ao conectar com o backend");
     }
 }
+
 // ==========================
 // LISTA DE PERSONAGENS SALVOS
 // ==========================
