@@ -417,3 +417,38 @@ function rollAttack(index) {
 function closeDamageModal() {
     document.getElementById('damage-modal').classList.remove('show');
 }
+
+async function salvarPersonagem() {
+  const personagem = {
+    name: character.name,
+    hpCurrent: character.hpCurrent,
+    hpMax: character.hpMax,
+    sanityCurrent: character.sanityCurrent,
+    sanityMax: character.sanityMax,
+    manaBlocks: character.manaBlocks,
+    skills: character.skills,
+    attacks: attacks
+  };
+
+  try {
+    const res = await fetch("https://ficha-insana.vercel.app/personagens", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(personagem)
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      alert(data.erro || "Erro ao salvar personagem");
+      return;
+    }
+
+    alert("✅ Personagem salvo com sucesso!");
+  } catch (e) {
+    console.error(e);
+    alert("❌ Erro de conexão com o servidor");
+  }
+}
