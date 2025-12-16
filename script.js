@@ -418,6 +418,14 @@ function closeDamageModal() {
     document.getElementById('damage-modal').classList.remove('show');
 }
 
+const API_URL = "https://ficha-insana.vercel.app";
+
+document.addEventListener("DOMContentLoaded", () => {
+  document
+    .getElementById("save-character")
+    .addEventListener("click", salvarPersonagem);
+});
+
 async function salvarPersonagem() {
   const personagem = {
     name: character.name,
@@ -431,7 +439,7 @@ async function salvarPersonagem() {
   };
 
   try {
-    const res = await fetch("https://ficha-insana.vercel.app/personagens", {
+    const res = await fetch(`${API_URL}/personagens`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
@@ -449,6 +457,6 @@ async function salvarPersonagem() {
     alert("✅ Personagem salvo com sucesso!");
   } catch (e) {
     console.error(e);
-    alert("❌ Erro de conexão com o servidor");
+    alert("❌ Erro ao conectar com o backend");
   }
 }
