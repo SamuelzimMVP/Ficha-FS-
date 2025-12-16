@@ -1,15 +1,17 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Crônicas do D100 - RPG de Mesa</title>
     <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
     <!-- Cabeçalho -->
     <header>
-        
+
         <div class="container">
             <h1 class="logo">⚔️ Falsa Realidade</h1>
             <nav>
@@ -32,8 +34,10 @@
             <div class="info-cards">
                 <div class="card">
                     <h3>🎲 Sistema D100</h3>
-                    <p>Nosso sistema utiliza um dado de 100 faces (D100) para resolver todas as ações. A regra é simples: <strong>quanto menor o resultado, melhor!</strong></p>
-                    <p>Role o dado e compare com o valor da sua perícia. Se o resultado for igual ou menor, você teve sucesso!</p>
+                    <p>Nosso sistema utiliza um dado de 100 faces (D100) para resolver todas as ações. A regra é
+                        simples: <strong>quanto menor o resultado, melhor!</strong></p>
+                    <p>Role o dado e compare com o valor da sua perícia. Se o resultado for igual ou menor, você teve
+                        sucesso!</p>
                 </div>
 
                 <div class="card">
@@ -51,11 +55,11 @@
                     <p>Baseado no resultado do D100:</p>
                     <ul class="success-list">
                         <li><strong>0-10:</strong> 0 </li>
-                        <li><strong>10-35:</strong>  1</li>
+                        <li><strong>10-35:</strong> 1</li>
                         <li><strong>36-59:</strong> 2</li>
-                        <li><strong>60-75:</strong>  3</li>
-                        <li><strong>76-89:</strong>  4</li>
-                        <li><strong>90-100:</strong>  5</li>
+                        <li><strong>60-75:</strong> 3</li>
+                        <li><strong>76-89:</strong> 4</li>
+                        <li><strong>90-100:</strong> 5</li>
                     </ul>
                 </div>
             </div>
@@ -70,108 +74,103 @@
                 <button class="char-tab" data-tab="attacks-tab">Ataques</button>
                 <button class="char-tab" data-tab="story-tab">História</button>
             </div>
-        <div id="skills-tab" class="char-tab-content active">
-        <div class="card">
-            <h3>⚔️ Atributos e Perícias</h3>
-                <div class="character-section">
-                    <div class="card">
-                        <h3>📝 Informações Básicas</h3>
-                        <div class="form-group">
-                            <label>Nome do Personagem:</label>
-                            <input type="text" id="char-name" placeholder="Digite o nome...">
-                        </div>
-                    </div>
-
-                    <div class="card">
-                        <h3>❤️ Status Vitais</h3>
-                        <div class="vital-stats">
+            <div id="skills-tab" class="char-tab-content active">
+                <div class="card">
+                    <h3>⚔️ Atributos e Perícias</h3>
+                    <div class="character-section">
+                        <div class="card">
+                            <h3>📝 Informações Básicas</h3>
                             <div class="form-group">
-                                <label>Vida Atual:</label>
-                                <input type="number" id="hp-current" value="100" min="0">
-                            </div>
-                            <div class="form-group">
-                                <label>Vida Máxima:</label>
-                                <input type="number" id="hp-max" value="100" min="0">
-                            </div>
-                            <div class="form-group">
-                                <label>Sanidade Atual:</label>
-                                <input type="number" id="sanity-current" value="100" min="0">
-                            </div>
-                            <div class="form-group">
-                                <label>Sanidade Máxima:</label>
-                                <input type="number" id="sanity-max" value="100" min="0">
-                            </div>
-                            <div class="form-group">
-                                <label>Blocos de Mana:</label>
-                                <input type="number" id="mana-blocks" value="0" min="0">
+                                <label>Nome do Personagem:</label>
+                                <input type="text" id="char-name" placeholder="Digite o nome...">
                             </div>
                         </div>
-                    </div>
 
-                    <div class="card">
-                        <h3>⚔️ Atributos e Perícias</h3>
-                        <p class="hint">Clique no 🎲 para rolar um teste com o atributo!</p>
-                        <div class="skills-grid" id="skills-container">
-                            <!-- Será preenchido via JavaScript -->
-                            
+                        <div class="card">
+                            <h3>❤️ Status Vitais</h3>
+                            <div class="vital-stats">
+                                <div class="form-group">
+                                    <label>Vida Atual:</label>
+                                    <input type="number" id="hp-current" value="100" min="0">
+                                </div>
+                                <div class="form-group">
+                                    <label>Vida Máxima:</label>
+                                    <input type="number" id="hp-max" value="100" min="0">
+                                </div>
+                                <div class="form-group">
+                                    <label>Sanidade Atual:</label>
+                                    <input type="number" id="sanity-current" value="100" min="0">
+                                </div>
+                                <div class="form-group">
+                                    <label>Sanidade Máxima:</label>
+                                    <input type="number" id="sanity-max" value="100" min="0">
+                                </div>
+                                <div class="form-group">
+                                    <label>Blocos de Mana:</label>
+                                    <input type="number" id="mana-blocks" value="0" min="0">
+                                </div>
+                            </div>
                         </div>
 
-                    <div class="card" id="cardVantagem>
+                        <div class="card">
+                            <h3>⚔️ Atributos e Perícias</h3>
+                            <p class="hint">Clique no 🎲 para rolar um teste com o atributo!</p>
+                            <div class="skills-grid" id="skills-container">
+                                <!-- Será preenchido via JavaScript -->
+
+                            </div>
+
+                            <div class="card" id="cardVantagem>
                     <h3>⚖️ Vantagem</h3>
 
-                    <div class="form-group">
-                        <label>Modificador de rolagem</label>
-                        <input 
-                            type="number"
-                            id="advantage-mod"
-                            value="0"
-                            placeholder="0"
-                        >
-                        <p class="hint">
-                            Positivo = vantagem | Negativo = desvantagem
-                        </p>
+                    <div class=" form-group">
+                                <label>Modificador de rolagem</label>
+                                <input type="number" id="advantage-mod" value="0" placeholder="0">
+                                <p class="hint">
+                                    Positivo = vantagem | Negativo = desvantagem
+                                </p>
+                            </div>
+                        </div>
+                        <div class="skills-grid" id="skills-container"></div>
                     </div>
                 </div>
-                 <div class="skills-grid" id="skills-container"></div>
+
             </div>
-        </div>
 
+            </div>
+            <div id="attacks-tab" class="char-tab-content">
+
+                <div class="card">
+                    <h3>🗡️ Ataques Personalizados</h3>
+
+                    <button class="btn btn-primary" id="add-attack-btn">➕ Adicionar Ataque</button>
+
+                    <div id="attack-list"></div>
                 </div>
 
-                </div>
-        <div id="attacks-tab" class="char-tab-content">
-        
-            <div class="card">
-                <h3>🗡️ Ataques Personalizados</h3>
+                <!-- Modal -->
+                <div id="attack-modal" class="modal">
+                    <div class="modal-content">
+                        <span class="close-modal" id="close-attack-modal">&times;</span>
 
-                        <button class="btn btn-primary" id="add-attack-btn">➕ Adicionar Ataque</button>
+                        <h3>Criar Ataque</h3>
 
-                        <div id="attack-list"></div>
-                    </div>
+                        <div class="form-group">
+                            <label>Nome do Ataque</label>
+                            <input type="text" id="attack-name">
+                        </div>
 
-                    <!-- Modal -->
-                    <div id="attack-modal" class="modal">
-                        <div class="modal-content">
-                            <span class="close-modal" id="close-attack-modal">&times;</span>
+                        <div class="form-group">
+                            <label>Descrição</label>
+                            <input type="text" id="attack-desc">
+                        </div>
 
-                            <h3>Criar Ataque</h3>
+                        <div class="form-group">
+                            <label>Dano Garantido</label>
+                            <input type="number" id="attack-flat" value="0">
+                        </div>
 
-                            <div class="form-group">
-                                <label>Nome do Ataque</label>
-                                <input type="text" id="attack-name">
-                            </div>
-
-                            <div class="form-group">
-                                <label>Descrição</label>
-                                <input type="text" id="attack-desc">
-                            </div>
-
-                            <div class="form-group">
-                                <label>Dano Garantido</label>
-                                <input type="number" id="attack-flat" value="0">
-                            </div>
-
-                            <div class="form-group">
+                        <div class="form-group">
                             <label>Adicionar Dados</label>
 
                             <div style="display:flex; gap:0.5rem;">
@@ -179,23 +178,23 @@
                                 <input type="number" id="dice-sides" placeholder="Lados (D)" min="2" max="9999">
                                 <button type="button" class="btn btn-secondary" id="add-dice">➕</button>
                             </div>
-                            </div>
-                            
-
-                            <div id="dice-list"></div>
-
-
-                            <button class="btn btn-primary" id="save-attack">Salvar Ataque</button>
                         </div>
+
+
+                        <div id="dice-list"></div>
+
+
+                        <button class="btn btn-primary" id="save-attack">Salvar Ataque</button>
                     </div>
-            <div id="attack-list"></div>
-            <div id="attack-result" class="result-box"></div>
-         </div>
-        </div>
-        <div id="story-tab" class="char-tab-content">
-        <div class="card">
-            <h3>📜 História do Personagem</h3>
-            <textarea id="char-history" class="char-textarea" placeholder="História..."></textarea>
+                </div>
+                <div id="attack-list"></div>
+                <div id="attack-result" class="result-box"></div>
+            </div>
+            </div>
+            <div id="story-tab" class="char-tab-content">
+                <div class="card">
+                    <h3>📜 História do Personagem</h3>
+                    <textarea id="char-history" class="char-textarea" placeholder="História..."></textarea>
 
 
 
@@ -203,32 +202,42 @@
 
                 <div class="card">
                     <h3>🧍 Descrição</h3>
-                    <textarea id="char-description" class="char-textarea" placeholder="Aparência, personalidade..."></textarea>
+                    <textarea id="char-description" class="char-textarea"
+                        placeholder="Aparência, personalidade..."></textarea>
                 </div>
 
                 <div class="card">
                     <h3>🎒 Inventário</h3>
-                    <textarea id="char-inventory" class="char-textarea" placeholder="Itens, armas, objetos..."></textarea>
+                    <textarea id="char-inventory" class="char-textarea"
+                        placeholder="Itens, armas, objetos..."></textarea>
                 </div>
             </div>
 
-                <div class="button-group">
-                    
-                    <button class="btn btn-primary"  id="save-character">💾 Salvar Personagem</button>
-                    <button class="btn btn-secondary" id="load-character">📂 Carregar Personagem</button>
-                    <button class="btn btn-secondary" id="clear-character">🗑️ Limpar Ficha</button>
-                </div>
+            <div class="button-group">
+
+                <button class="btn btn-primary" id="save-character">💾 Salvar Personagem</button>
+                <input type="number" id="character-id" placeholder="ID do personagem" />
+
+                <button class="btn btn-secondary" id="load-character">
+                    Carregar personagem
+                </button>
+
+                <pre id="output"></pre>
+                <button class="btn btn-secondary" id="clear-character">🗑️ Limpar Ficha</button>
+            </div>
             </div>
         </section>
 
         <!-- Regras -->
         <section id="rules" class="page">
             <h2 class="page-title">Regras do Sistema</h2>
-            
+
             <div class="card">
                 <h3>📖 Como Funciona o D100</h3>
-                <p>O sistema D100 é intuitivo e emocionante. Toda vez que seu personagem tenta realizar uma ação, você rola um dado de 100 faces (D100) e compara com o valor da perícia correspondente.</p>
-                <p class="highlight">Regra de Ouro: <strong>Menor é melhor!</strong> Quanto menor o número que você tirar, melhor será o resultado da sua ação.</p>
+                <p>O sistema D100 é intuitivo e emocionante. Toda vez que seu personagem tenta realizar uma ação, você
+                    rola um dado de 100 faces (D100) e compara com o valor da perícia correspondente.</p>
+                <p class="highlight">Regra de Ouro: <strong>Menor é melhor!</strong> Quanto menor o número que você
+                    tirar, melhor será o resultado da sua ação.</p>
             </div>
 
             <div class="card">
@@ -256,37 +265,41 @@
                     <div class="critical-row">
                         <span class="critical-range">10-35</span>
                         <span class="critical-level">Crítico = 1</span>
-                        
+
                     </div>
                     <div class="critical-row">
                         <span class="critical-range">36-59</span>
                         <span class="critical-level">Crítico = 2</span>
-                        
+
                     </div>
                     <div class="critical-row">
                         <span class="critical-range">60-75</span>
                         <span class="critical-level">Crítico = 3</span>
-                        
+
                     </div>
                     <div class="critical-row">
                         <span class="critical-range">76-89</span>
                         <span class="critical-level">Crítico = 4</span>
-                       
+
                     </div>
                     <div class="critical-row">
                         <span class="critical-range">90-100</span>
                         <span class="critical-level">Crítico = 5</span>
-                        
+
                     </div>
                 </div>
             </div>
 
             <div class="card">
                 <h3>⚖️ Vantagem e Desvantagem</h3>
-                <p><strong>Vantagem:</strong> Quando você tem condições favoráveis, role múltiplos dados e escolha o <strong>menor</strong> resultado.</p>
-                <p><strong>Desvantagem:</strong> Quando você tem condições desfavoráveis, role múltiplos dados e escolha o <strong>maior</strong> resultado.</p>
-                <p class="hint">Exemplo: Com vantagem, você rola 3 dados e tira 15, 67 e 43. Seu resultado final é 15!</p>
-            </div><div id="load-character-list"></div>
+                <p><strong>Vantagem:</strong> Quando você tem condições favoráveis, role múltiplos dados e escolha o
+                    <strong>menor</strong> resultado.</p>
+                <p><strong>Desvantagem:</strong> Quando você tem condições desfavoráveis, role múltiplos dados e escolha
+                    o <strong>maior</strong> resultado.</p>
+                <p class="hint">Exemplo: Com vantagem, você rola 3 dados e tira 15, 67 e 43. Seu resultado final é 15!
+                </p>
+            </div>
+            <div id="load-character-list"></div>
 
 
         </section>
@@ -294,17 +307,17 @@
     </main>
 
     <div id="attack-create-modal" class="modal">
-    <div class="modal-content">
-        <!-- formulário de criação -->
-    </div>
+        <div class="modal-content">
+            <!-- formulário de criação -->
+        </div>
     </div>
 
 
     <div id="damage-result-modal" class="modal">
-    <div class="modal-content" id="damage-result-content">
-        <!-- resultado bonito entra aqui -->
+        <div class="modal-content" id="damage-result-content">
+            <!-- resultado bonito entra aqui -->
+        </div>
     </div>
-</div>
 
 
     <!-- Modal de Resultado de Rolagem Rápida -->
@@ -320,9 +333,10 @@
     </footer>
 
     <script src="script.js"></script>
-  
-    
-</div>
+
+
+    </div>
 
 </body>
+
 </html>

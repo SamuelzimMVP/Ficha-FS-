@@ -460,3 +460,72 @@ async function salvarPersonagem() {
     alert("❌ Erro ao conectar com o backend");
   }
 }
+
+
+document
+  .getElementById("load-character")
+  .addEventListener("click", carregarPersonagem());
+
+async function carregarPersonagem() {
+  const id = Number(document.getElementById("character-id").value);
+
+  if (!id) {
+    alert("Digite um ID válido");
+    return;
+  }
+
+  try {
+    const resposta = await fetch(`${API_URL}/personagens/${id}`);
+
+    if (!resposta.ok) {
+      throw new Error("Personagem não encontrado");
+    }
+
+    const p = await resposta.json();
+    console.log("Personagem carregado:", p);
+
+    // ===== MAPEAR CAMPOS =====
+    character.name = p.name;
+    character.hpCurrent = p.hp_current;
+    character.hpMax = p.hp_max;
+    character.sanityCurrent = p.sanity_current;
+    character.sanityMax = p.sanity_max;
+    character.manaBlocks = p.mana_blocks;
+
+    // ===== MAPEAR PERÍCIAS =====
+    character.skills = {};
+    skills.forEach(s => character.skills[s] = 40); // default
+
+    p.skills.forEach(s => {
+      character.skills[s.name] = s.value;
+    });
+
+    // ===== MAPEAR ATAQUES =====
+    attacks = p.attacks.map(atk => ({
+      name: atk.name,
+      desc: atk.description,
+      flat: atk.flat_damage,
+      dice: atk.dice.map(d => ({
+        qty: d.quantity,
+        sides: d.sides
+      }))
+    }));
+
+    // ===== ATUALIZAR INPUTS =====
+    document.getElementById("char-name").value = character.name;
+    document.getElementById("hp-current").value = character.hpCurrent;
+    document.getElementById("hp-max").value = character.hpMax;
+    document.getElementById("sanity-current").value = character.sanityCurrent;
+    document.getElementById("sanity-max").value = character.sanityMax;
+    document.getElementById("mana-blocks").value = character.manaBlocks;
+
+    // ===== RENDERIZAR TELA =====
+    renderSkills();
+    renderAttacks();
+
+    alert("✅ Personagem carregado com sucesso!");
+  } catch (erro) {
+    console.error(erro);
+    alert("❌ Erro ao carregar personagem");
+  }
+}
