@@ -211,43 +211,18 @@
             </div>
         </section>
 
-        <!-- Personagens Salvos - CORRIGIDO -->
         <section id="saved-characters" class="page">
-            <h2 class="page-title">📂 Carregar Personagem por ID</h2>
+            <h2 class="page-title">📂 Carregar Personagens por ID</h2>
             <div class="card">
-                <div class="form-group" style="display: flex; gap: 0.5rem; align-items: center; margin-bottom: 1rem;">
+                <div class="form-group" style="display: flex; gap: 0.5rem; margin-bottom: 1rem;">
                     <input type="number" id="character-id" placeholder="Digite o ID do personagem" min="1">
                     <button class="btn btn-primary" id="load-character">Carregar</button>
                 </div>
 
-                <!-- Painel de detalhes do personagem carregado -->
-                <div id="character-detail" class="card" style="display: none; margin-top: 1.5rem;">
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <h3 id="detail-name">Nome do Personagem</h3>
-                        <button class="btn btn-secondary" id="close-detail">Fechar</button>
-                    </div>
-
-                    <div class="preview-stats">
-                        <p>❤️ Vida: <span id="detail-hp"></span></p>
-                        <p>🧠 Sanidade: <span id="detail-sanity"></span></p>
-                        <p>🔮 Mana: <span id="detail-mana"></span></p>
-                    </div>
-
-                    <h4>Perícias</h4>
-                    <div id="detail-skills" class="preview-grid"></div>
-
-                    <h4>Ataques</h4>
-                    <div id="detail-attacks"></div>
-
-                    <button id="load-saved-character" class="btn btn-primary" style="margin-top: 1rem; width: 100%;">
-                        📥 Carregar este Personagem
-                    </button>
+                <h3>Personagens Carregados</h3>
+                <div id="saved-character-list">
+                    <p>Digite um ID acima para carregar um personagem.</p>
                 </div>
-
-                <!-- Mensagem de instrução -->
-                <p id="saved-character-list" style="text-align: center; color: #666; margin-top: 1.5rem;">
-                    Digite um ID acima para carregar um personagem.
-                </p>
             </div>
         </section>
 

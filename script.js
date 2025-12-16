@@ -3,6 +3,42 @@ console.log("SCRIPT CARREGOU");
 // ==========================
 // DADOS DO SISTEMA
 // ==========================
+// Nome da chave no localStorage
+const STORAGE_KEY = "ficha_fs_loaded_characters";
+
+// Salva os personagens carregados no localStorage
+function saveLoadedCharactersToStorage() {
+    const serializable = Array.from(loadedCharacters.entries()).map(([id, p]) => {
+        // Remove funções ou dados complexos; mantém só o necessário
+        return {
+            id: Number(id),
+            name: p.name || '',
+            hp_current: p.hp_current || 100,
+            hp_max: p.hp_max || 100,
+            sanity_current: p.sanity_current || 100,
+            sanity_max: p.sanity_max || 100,
+            mana_blocks: p.mana_blocks || 0,
+            skills: Array.isArray(p.skills) ? p.skills : [],
+            attacks: Array.isArray(p.attacks) ? p.attacks : []
+        };
+    });
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(serializable));
+}
+
+// Carrega os personagens do localStorage ao iniciar
+function loadLoadedCharactersFromStorage() {
+    try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) {
+            const list = JSON.parse(saved);
+            list.forEach(item => {
+                loadedCharacters.set(item.id, item);
+            });
+        }
+    } catch (e) {
+        console.warn("Não foi possível carregar personagens salvos localmente.", e);
+    }
+}
 const skills = [
     'Destreza', 'Agilidade', 'Luta', 'Contra-ataque',
     'Inteligência', 'Psicologia', 'Vigor', 'Percepção',
@@ -37,12 +73,15 @@ document.addEventListener("DOMContentLoaded", () => {
     initCharacterInputs();
     initAttacks();
     initSaveLoadButtons();
+
+    loadLoadedCharactersFromStorage();
+    renderLoadedCharacters();
 });
 
 function initSaveLoadButtons() {
     const saveBtn = document.getElementById("save-character");
     const loadBtn = document.getElementById("load-character");
-
+    document.getElementById("load-character")?.addEventListener("click", carregarPersonagem);
     if (saveBtn) saveBtn.addEventListener("click", salvarPersonagem);
     if (loadBtn) loadBtn.addEventListener("click", carregarPersonagem);
 }
@@ -401,12 +440,22 @@ function showDamageResult(name, rolls, total, guaranteed) {
 // ==========================
 const API_URL = "https://ficha-insana.vercel.app";
 
+// Armazena os personagens já carregados (para evitar duplicatas)
+const loadedCharacters = new Map();
+
+// Substitua sua função carregarPersonagem() por esta:
 async function carregarPersonagem() {
     const idInput = document.getElementById("character-id");
     const id = Number(idInput?.value);
 
     if (!id || id <= 0 || !Number.isInteger(id)) {
         alert("Por favor, digite um ID válido (número inteiro positivo).");
+        return;
+    }
+
+    // Evita duplicatas (mesmo com localStorage)
+    if (loadedCharacters.has(id)) {
+        alert("Este personagem já está na lista.");
         return;
     }
 
@@ -419,69 +468,137 @@ async function carregarPersonagem() {
 
         const p = await res.json();
 
-        // Preenche o painel de detalhes
-        const detailPanel = document.getElementById("character-detail");
-        detailPanel.style.display = "block";
+        // Salva no Map local
+        loadedCharacters.set(id, p);
 
-        document.getElementById("detail-name").textContent = p.name || "Sem nome";
-        document.getElementById("detail-hp").textContent = `${p.hp_current || 100} / ${p.hp_max || 100}`;
-        document.getElementById("detail-sanity").textContent = `${p.sanity_current || 100} / ${p.sanity_max || 100}`;
-        document.getElementById("detail-mana").textContent = p.mana_blocks || 0;
+        // ✅ SALVA NO localStorage (só os dados essenciais)
+        saveLoadedCharactersToStorage();
 
-        // Perícias — com cor legível
-        const skillsDiv = document.getElementById("detail-skills");
-        skillsDiv.innerHTML = "";
+        // Atualiza a lista
+        renderLoadedCharacters();
+
+        // Limpa o campo
+        idInput.value = "";
+    } catch (err) {
+        console.error("Erro ao carregar personagem:", err);
+        alert("❌ " + (err.message || "Erro ao carregar personagem."));
+    }
+}
+
+function renderLoadedCharacters() {
+    const list = document.getElementById("saved-character-list");
+    if (!list) return;
+
+    if (loadedCharacters.size === 0) {
+        list.innerHTML = "<p style='color:#666;'>Digite um ID acima para carregar um personagem.</p>";
+        return;
+    }
+
+    list.innerHTML = "";
+
+    loadedCharacters.forEach((p, id) => {
+        const item = document.createElement("div");
+        item.className = "character-item";
+
+        // Estilos principais: fundo preto, texto cinza, sombra vermelha
+        item.style.cssText = `
+            background-color: #000;
+            color: #ccc;
+            border: none;
+            border-radius: 8px;
+            padding: 14px;
+            margin-bottom: 14px;
+            box-shadow: 0 0 0 2px #ff3333, 0 4px 8px rgba(0,0,0,0.5);
+            position: relative;
+        `;
+
+        const name = p.name || "Sem nome";
+        const hp = `${p.hp_current || 100} / ${p.hp_max || 100}`;
+        const sanity = `${p.sanity_current || 100} / ${p.sanity_max || 100}`;
+        const mana = p.mana_blocks || 0;
+
+        // Destaque do nome em branco para contraste
+        item.innerHTML = `
+            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 10px;">
+                <strong style="color: #fff; font-size: 1.15em;">${name}</strong>
+                <span style="background: #333; color: #ff6666; padding: 2px 8px; border-radius: 4px; font-size: 0.85em; border: 1px solid #555;">
+                    ID: ${id}
+                </span>
+            </div>
+            <div style="color: #bbb; font-size: 0.95em; margin: 8px 0; line-height: 1.4;">
+                ❤️ Vida: ${hp} | 🧠 Sanidade: ${sanity} | 🔮 Mana: ${mana}
+            </div>
+            <div style="margin: 10px 0; color: #aaa; font-size: 0.9em;">
+                <strong>Perícias:</strong> 
+                <span>${Array.isArray(p.skills) ? p.skills.slice(0, 3).map(s => s.name).join(', ') + (p.skills.length > 3 ? '...' : '') : 'Nenhuma'}</span>
+            </div>
+            <button class="btn btn-primary" style="width: 100%; margin-top: 10px; background-color: #c00; border: none; color: white; padding: 8px; border-radius: 5px; font-weight: bold;">
+                📥 Usar este personagem
+            </button>
+        `;
+
+        const useBtn = item.querySelector('button');
+        useBtn.addEventListener('click', () => {
+            applyCharacterToSheet(p);
+        });
+
+        list.appendChild(item);
+    });
+}
+
+// Aplica o personagem à ficha ativa
+async function applyCharacterToSheet(p) {
+    try {
+        // Atualiza o objeto global
+        character = {
+            name: p.name || '',
+            hpCurrent: p.hp_current || 100,
+            hpMax: p.hp_max || 100,
+            sanityCurrent: p.sanity_current || 100,
+            sanityMax: p.sanity_max || 100,
+            manaBlocks: p.mana_blocks || 0,
+            skills: {}
+        };
+
+        skills.forEach(s => character.skills[s] = 40);
         if (Array.isArray(p.skills)) {
             p.skills.forEach(s => {
-                const el = document.createElement("div");
-                el.className = "preview-skill";
-                el.textContent = `${s.name}: ${s.value}`;
-                el.style.color = "#222"; // ✅ Cor corrigida
-                el.style.margin = "0.25rem 0";
-                skillsDiv.appendChild(el);
-            });
-        }
-
-        // Ataques — com cor legível
-        const attacksDiv = document.getElementById("detail-attacks");
-        attacksDiv.innerHTML = "";
-        if (Array.isArray(p.attacks) && p.attacks.length > 0) {
-            p.attacks.forEach(atk => {
-                const el = document.createElement("div");
-                el.className = "preview-attack";
-                el.style.color = "#222"; // ✅ Cor corrigida
-                el.style.margin = "0.35rem 0";
-                const diceText = atk.dice?.map(d => `${d.quantity}d${d.sides}`).join(" + ") || "";
-                // Mantém o nome em negrito, mas com cor escura
-                el.innerHTML = `<strong style="color:#222;">${atk.name}</strong>: ${diceText} + ${atk.flat_damage || 0}`;
-                attacksDiv.appendChild(el);
-            });
-        } else {
-            const noAttack = document.createElement("p");
-            noAttack.textContent = "Nenhum ataque";
-            noAttack.style.color = "#666"; // texto secundário em cinza
-            attacksDiv.appendChild(noAttack);
-        }
-
-        // Atualiza o ID salvo para o botão de carregar
-        selectedCharacterId = p.id;
-
-        // Configura o botão "Carregar este Personagem"
-        const loadBtn = document.getElementById("load-saved-character");
-        if (loadBtn) {
-            const newBtn = loadBtn.cloneNode(true);
-            loadBtn.parentNode.replaceChild(newBtn, loadBtn);
-            newBtn.addEventListener("click", () => {
-                if (selectedCharacterId) {
-                    carregarPersonagemPeloId(selectedCharacterId);
+                if (s.name && character.skills.hasOwnProperty(s.name)) {
+                    character.skills[s.name] = s.value ?? 40;
                 }
             });
         }
 
-        alert("✅ Personagem encontrado! Clique em 'Carregar este Personagem' para usá-lo.");
+        attacks = [];
+        if (Array.isArray(p.attacks)) {
+            attacks = p.attacks.map(atk => ({
+                name: atk.name || 'Ataque sem nome',
+                desc: atk.description || '',
+                flat: atk.flat_damage || 0,
+                dice: (atk.dice || []).map(d => ({
+                    qty: d.quantity || 1,
+                    sides: d.sides || 6
+                }))
+            }));
+        }
+
+        // Atualiza a UI
+        document.getElementById("char-name").value = character.name;
+        document.getElementById("hp-current").value = character.hpCurrent;
+        document.getElementById("hp-max").value = character.hpMax;
+        document.getElementById("sanity-current").value = character.sanityCurrent;
+        document.getElementById("sanity-max").value = character.sanityMax;
+        document.getElementById("mana-blocks").value = character.manaBlocks;
+
+        renderSkills();
+        renderAttacks();
+
+        // Muda para a aba de criação
+        document.querySelector('.nav-btn[data-page="character"]').click();
+        alert("✅ Personagem aplicado com sucesso!");
     } catch (err) {
-        console.error("Erro ao carregar personagem:", err);
-        alert("❌ " + (err.message || "Erro ao carregar personagem."));
+        console.error(err);
+        alert("❌ Erro ao aplicar personagem.");
     }
 }
 
