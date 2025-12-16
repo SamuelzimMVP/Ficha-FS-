@@ -18,6 +18,8 @@
                 <button class="nav-btn" data-page="home">Início</button>
                 <button class="nav-btn" data-page="character">Criar Personagem</button>
                 <button class="nav-btn" data-page="rules">Regras</button>
+                <button class="nav-btn" data-page="saved-characters">Personagens Salvos</button>
+
             </nav>
         </div>
     </header>
@@ -215,19 +217,33 @@
             <div class="button-group">
 
                 <button class="btn btn-primary" id="save-character">💾 Salvar Personagem</button>
-                <input type="number" id="character-id" placeholder="ID do personagem" />
-
-                <button class="btn btn-secondary" id="load-character" type="button">
-                    Carregar personagem
-                </button>
-
-
+                
                 <pre id="output"></pre>
                 <button class="btn btn-secondary" id="clear-character">🗑️ Limpar Ficha</button>
             </div>
             </div>
         </section>
+        <section id="saved-characters" class="page">
+            <h2 class="page-title">📂 Personagens Salvos</h2>
 
+            <div class="card">
+                <button
+                class="btn btn-secondary"
+                id="refresh-characters"
+                type="button"
+                >
+                🔄 Atualizar Lista
+                </button>
+                <input type="number" id="character-id" placeholder="ID do personagem" />
+
+                <button class="btn btn-secondary" id="load-character" type="button">
+                    Carregar personagem
+                </button>
+                <div id="saved-character-list" class="character-list"></div>
+            </div>
+        </section>
+
+        
         <!-- Regras -->
         <section id="rules" class="page">
             <h2 class="page-title">Regras do Sistema</h2>
