@@ -413,7 +413,7 @@ function renderAttacks() {
     });
 }
 
-window.rollAttack = function(index) {
+window.rollAttack = function (index) {
     const attack = attacks[index];
     let totalDamage = attack.flat;
     let rollsArray = [];
@@ -800,6 +800,40 @@ async function salvarPersonagem() {
         if (data.id) {
             character.id = data.id;
         }
+        
+        if (character.id) {
+            // Cria uma versão "salvável" do personagem para a lista local
+            const personagemParaLista = {
+                id: character.id,
+                name: character.name,
+                hp_current: character.hpCurrent,
+                hp_max: character.hpMax,
+                sanity_current: character.sanityCurrent,
+                sanity_max: character.sanityMax,
+                mana_blocks: character.manaBlocks,
+                skills: Object.entries(character.skills).map(([name, value]) => ({ name, value })),
+                attacks: attacks.map(atk => ({
+                    name: atk.name || 'Ataque',
+                    description: atk.desc || '',
+                    flat_damage: atk.flat || 0,
+                    dice: (atk.dice || []).map(d => ({
+                        quantity: d.qty || 1,
+                        sides: d.sides || 6
+                    }))
+                }))
+            };
+
+            // Adiciona ao Map local
+            loadedCharacters.set(character.id, personagemParaLista);
+
+            // Salva no localStorage
+            saveLoadedCharactersToStorage();
+
+            // Atualiza a visualização (se estiver na aba de salvos)
+            if (document.getElementById("saved-characters")?.classList.contains("active")) {
+                renderLoadedCharacters();
+            }
+        }
 
         // ✅ 2. Atualiza o botão para "Atualizar Ficha"
         atualizarBotaoSalvar();
@@ -929,7 +963,7 @@ document.getElementById("clear-character")?.addEventListener("click", () => {
     };
     skills.forEach(s => character.skills[s] = 40);
     attacks = [];
-    
+
     // Atualiza UI
     initCharacterInputs();
     renderSkills();
