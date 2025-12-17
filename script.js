@@ -761,7 +761,6 @@ async function salvarPersonagem() {
         return;
     }
 
-    // ✅ Envia APENAS os campos que o backend aceita sem erro
     const personagem = {
         name: character.name.trim(),
         hp_current: Number(character.hpCurrent) || 100,
@@ -774,25 +773,39 @@ async function salvarPersonagem() {
     };
 
     try {
-        const res = await fetch(`${API_URL}/personagens`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(personagem)
-        });
+        let res;
+
+        if (character.id) {
+            // ✅ ATUALIZAR (PUT)
+            res = await fetch(`${API_URL}/personagens/${character.id}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(personagem)
+            });
+        } else {
+            // ✅ CRIAR NOVO (POST)
+            res = await fetch(`${API_URL}/personagens`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(personagem)
+            });
+        }
 
         const data = await res.json();
 
         if (!res.ok) {
             const msg = data.erro || data.message || "Erro ao salvar";
-            console.error("Erro do backend:", data);
+            console.error("Erro:", data);
             alert("❌ " + msg);
             return;
         }
 
-        // ✅ Define o ID
-        character.id = data.id;
+        // ✅ Se for criação, define o ID
+        if (!character.id && data.id) {
+            character.id = data.id;
+        }
 
-        // ✅ Cria cópia COM skills/attacks para a lista local (só no frontend)
+        // ✅ Atualiza lista local (se for novo, adiciona; se for existente, atualiza)
         const personagemParaLista = {
             id: character.id,
             name: character.name,
@@ -810,13 +823,13 @@ async function salvarPersonagem() {
                     quantity: d.qty || 1,
                     sides: d.sides || 6
                 }))
-                }))
+            }))
         };
 
         loadedCharacters.set(character.id, personagemParaLista);
         saveLoadedCharactersToStorage();
 
-        // ✅ Atualiza interface
+        // ✅ Atualiza botão e vai para "Personagens Salvos"
         atualizarBotaoSalvar();
         const savedTab = document.querySelector('.nav-btn[data-page="saved-characters"]');
         if (savedTab) {
@@ -827,9 +840,9 @@ async function salvarPersonagem() {
             renderLoadedCharacters();
         }
 
-        alert("✅ Personagem salvo com sucesso!");
+        alert(character.id ? "✅ Personagem atualizado!" : "✅ Personagem salvo!");
     } catch (e) {
-        console.error("Erro de rede:", e);
+        console.error("Erro:", e);
         alert("❌ Falha de conexão.");
     }
 }
