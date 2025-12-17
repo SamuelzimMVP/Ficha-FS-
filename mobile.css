@@ -1,66 +1,198 @@
-@media (max-width: 480px) {
+/* mobile.css */
+@media (max-width: 768px) {
+    /* Geral */
+    body {
+        font-size: 14px;
+        padding: 0;
+        margin: 0;
+    }
 
-  /* Header */
-  header .container {
-    flex-direction: column;
-    gap: 0.8rem;
-  }
+    .container {
+        padding: 12px;
+    }
 
-  .logo {
-    font-size: 1.3rem;
-    text-align: center;
-  }
+    header .container {
+        padding: 10px 12px;
+    }
 
-  nav {
-    width: 100%;
-    justify-content: center;
-  }
+    .logo {
+        font-size: 1.4rem;
+    }
 
-  .nav-btn {
-    width: 100%;
-    text-align: center;
-  }
+    nav {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+    }
 
-  /* Títulos */
-  .hero-title {
-    font-size: 1.9rem;
-  }
+    .nav-btn {
+        padding: 8px 12px;
+        font-size: 0.9rem;
+        min-width: auto;
+    }
 
-  .page-title {
-    font-size: 1.7rem;
-  }
+    .page-title {
+        font-size: 1.5rem;
+        margin: 12px 0;
+    }
 
-  /* Cards */
-  .card {
-    padding: 1rem;
-  }
+    .card {
+        padding: 14px;
+        margin-bottom: 16px;
+        font-size: 14px;
+    }
 
-  /* Grids */
-  .skills-grid,
-  .vital-stats,
-  .info-cards {
-    grid-template-columns: 1fr;
-  }
+    .form-group {
+        margin-bottom: 12px;
+    }
 
-  /* Botões */
-  .button-group {
-    flex-direction: column;
-  }
+    .form-group label {
+        display: block;
+        margin-bottom: 4px;
+        font-weight: bold;
+        font-size: 14px;
+    }
 
-  .button-group .btn {
-    width: 100%;
-  }
+    .form-group input,
+    .form-group textarea {
+        width: 100%;
+        padding: 8px;
+        font-size: 14px;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+    }
 
-  /* Inputs */
-  input,
-  textarea {
-    font-size: 16px; /* evita zoom no iOS */
-  }
+    /* Abas de personagem */
+    .character-tabs {
+        display: flex;
+        overflow-x: auto;
+        gap: 8px;
+        margin: 12px 0;
+        padding-bottom: 6px;
+    }
 
-  /* Modais */
-  .modal-content {
-    padding: 1.2rem;
-    width: 95%;
-  }
+    .char-tab {
+        white-space: nowrap;
+        padding: 8px 16px;
+        font-size: 0.95rem;
+    }
 
+    /* Perícias */
+    .skills-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+    }
+
+    .skill-item {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .skill-item input {
+        width: 100%;
+        padding: 6px;
+    }
+
+    .skill-item .dice-btn {
+        align-self: flex-end;
+        padding: 4px 8px;
+        font-size: 16px;
+    }
+
+    /* Vantagem */
+    #cardVantagem {
+        margin-top: 16px;
+    }
+
+    /* Ataques */
+    #add-attack-btn {
+        width: 100%;
+        padding: 10px;
+        font-size: 1rem;
+        margin: 10px 0;
+    }
+
+    #attack-list .card {
+        padding: 12px;
+        margin-bottom: 12px;
+    }
+
+    /* História / Inventário */
+    .char-textarea {
+        width: 100%;
+        min-height: 100px;
+        padding: 10px;
+        font-size: 14px;
+        border-radius: 6px;
+    }
+
+    /* Botões de ação */
+    .button-group {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        margin-top: 16px;
+    }
+
+    .btn {
+        width: 100%;
+        padding: 12px;
+        font-size: 1rem;
+        border: none;
+        border-radius: 6px;
+    }
+
+    /* Personagens Salvos */
+    #saved-character-list .character-item {
+        padding: 12px !important;
+        margin-bottom: 12px !important;
+    }
+
+    /* Barras de vida/sanidade (se ativas) */
+    .health-bar,
+    .sanity-bar {
+        height: 16px;
+        border-radius: 8px;
+    }
+
+    /* Modais */
+    .modal-content {
+        padding: 16px;
+        margin: 10px;
+        border-radius: 12px;
+    }
+
+    .close-modal {
+        font-size: 24px;
+        padding: 4px 8px;
+    }
+
+    /* Footer */
+    footer {
+        font-size: 12px;
+        padding: 12px;
+    }
+
+    /* Global char btn */
+    .global-char-btn {
+        padding: 8px 12px;
+        font-size: 1.2rem;
+    }
+
+    /* Lista de personagens carregados (com sombra vermelha) */
+    #saved-character-list .character-item {
+        font-size: 13px;
+    }
+
+    #saved-character-list .character-item strong {
+        font-size: 15px;
+    }
+
+    /* Botões de ação nos personagens salvos */
+    #saved-character-list .btn {
+        padding: 8px;
+        font-size: 0.9rem;
+    }
 }

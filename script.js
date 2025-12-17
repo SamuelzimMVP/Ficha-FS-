@@ -8,21 +8,18 @@ const STORAGE_KEY = "ficha_fs_loaded_characters";
 
 // Salva os personagens carregados no localStorage
 function saveLoadedCharactersToStorage() {
-    const serializable = Array.from(loadedCharacters.entries()).map(([id, p]) => {
-        // Remove funções ou dados complexos; mantém só o necessário
-        return {
-            id: Number(id),
-            name: p.name || '',
-            hp_current: p.hp_current || 100,
-            hp_max: p.hp_max || 100,
-            sanity_current: p.sanity_current || 100,
-            sanity_max: p.sanity_max || 100,
-            mana_blocks: p.mana_blocks || 0,
-            skills: Array.isArray(p.skills) ? p.skills : [],
-            attacks: Array.isArray(p.attacks) ? p.attacks : []
-        };
-    });
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(serializable));
+    const data = Array.from(loadedCharacters.entries()).map(([id, p]) => ({
+        id: Number(id),
+        name: p.name,
+        hp_current: p.hp_current,
+        hp_max: p.hp_max,
+        sanity_current: p.sanity_current,
+        sanity_max: p.sanity_max,
+        mana_blocks: p.mana_blocks,
+        skills: p.skills || [],
+        attacks: p.attacks || []
+    }));
+    localStorage.setItem("ficha_fs_loaded_characters", JSON.stringify(data));
 }
 
 // Carrega os personagens do localStorage ao iniciar
@@ -515,7 +512,7 @@ function renderLoadedCharacters() {
     if (!list) return;
 
     if (loadedCharacters.size === 0) {
-        list.innerHTML = "<p style='color:#666;'>Digite um ID acima para carregar um personagem.</p>";
+        list.innerHTML = "<p style='color:#666;'>Nenhum personagem salvo. Crie um novo ou carregue por ID.</p>";
         return;
     }
 
@@ -532,7 +529,6 @@ function renderLoadedCharacters() {
             padding: 14px;
             margin-bottom: 14px;
             box-shadow: 0 0 0 2px #ff3333, 0 4px 8px rgba(0,0,0,0.5);
-            position: relative;
         `;
 
         const name = p.name || "Sem nome";
@@ -554,29 +550,21 @@ function renderLoadedCharacters() {
                 <strong>Perícias:</strong> 
                 <span>${Array.isArray(p.skills) ? p.skills.slice(0, 3).map(s => s.name).join(', ') + (p.skills.length > 3 ? '...' : '') : 'Nenhuma'}</span>
             </div>
-
-            <!-- ✅ BARRA DE AÇÕES -->
             <div style="display: flex; gap: 8px; margin-top: 12px;">
-                <button class="btn btn-primary" style="flex:1; background-color: #c00; border: none; color: white; padding: 6px; border-radius: 4px; font-weight: bold;" data-id="${id}">
-                    📥 Usar
-                </button>
-                <button class="btn btn-secondary delete-char" style="flex:1; background-color: #555; border: none; color: #ff6666; padding: 6px; border-radius: 4px;" data-id="${id}">
-                    🗑️ Deletar
-                </button>
-                <button class="btn btn-secondary refresh-char" style="flex:1; background-color: #444; border: none; color: #4ade80; padding: 6px; border-radius: 4px;" data-id="${id}">
-                    🔄 Atualizar
-                </button>
+                <button class="btn-use" data-id="${id}" style="flex:1; background:#c00; color:white; border:none; padding:6px; border-radius:4px; font-weight:bold;">📥 Usar</button>
+                <button class="btn-delete" data-id="${id}" style="flex:1; background:#555; color:#ff6666; border:none; padding:6px; border-radius:4px;">🗑️ Deletar</button>
+                <button class="btn-refresh" data-id="${id}" style="flex:1; background:#444; color:#4ade80; border:none; padding:6px; border-radius:4px;">🔄 Atualizar</button>
             </div>
         `;
 
         // Botão "Usar"
-        item.querySelector('button[data-id]').addEventListener('click', () => {
+        item.querySelector('.btn-use').addEventListener('click', () => {
             applyCharacterToSheet(p);
         });
 
         // Botão "Deletar"
-        item.querySelector('.delete-char').addEventListener('click', () => {
-            if (confirm(`Remover "${name}" da sua lista local?`)) {
+        item.querySelector('.btn-delete').addEventListener('click', () => {
+            if (confirm(`Remover "${name}" da sua lista?`)) {
                 loadedCharacters.delete(id);
                 saveLoadedCharactersToStorage();
                 renderLoadedCharacters();
@@ -584,27 +572,25 @@ function renderLoadedCharacters() {
         });
 
         // Botão "Atualizar"
-        item.querySelector('.refresh-char').addEventListener('click', async () => {
+        item.querySelector('.btn-refresh').addEventListener('click', async () => {
             try {
                 const res = await fetch(`${API_URL}/personagens/${id}`);
                 if (!res.ok) throw new Error("Não encontrado");
-                const freshData = await res.json();
-
-                // Atualiza no Map
-                loadedCharacters.set(id, freshData);
+                const fresh = await res.json();
+                loadedCharacters.set(id, fresh);
                 saveLoadedCharactersToStorage();
                 renderLoadedCharacters();
-
-                alert("✅ Personagem atualizado!");
+                alert("✅ Atualizado!");
             } catch (err) {
-                alert("❌ Falha ao atualizar personagem.");
-                console.error(err);
+                alert("❌ Falha ao atualizar.");
             }
         });
 
         list.appendChild(item);
     });
 }
+
+
 document.getElementById("refresh-all")?.addEventListener("click", async () => {
     if (loadedCharacters.size === 0) {
         alert("Nenhum personagem para atualizar.");
@@ -660,7 +646,7 @@ function applyCharacterToSheet(p) {
         attacks = [];
         if (Array.isArray(p.attacks)) {
             attacks = p.attacks.map(atk => ({
-                name: atk.name || 'Ataque sem nome',
+                name: atk.name || 'Ataque',
                 desc: atk.description || '',
                 flat: atk.flat_damage || 0,
                 dice: (atk.dice || []).map(d => ({
@@ -670,29 +656,28 @@ function applyCharacterToSheet(p) {
             }));
         }
 
-        // Atualiza a UI
-        document.getElementById("char-name").value = character.name;
-        document.getElementById("hp-current").value = character.hpCurrent;
-        document.getElementById("hp-max").value = character.hpMax;
-        document.getElementById("sanity-current").value = character.sanityCurrent;
-        document.getElementById("sanity-max").value = character.sanityMax;
-        document.getElementById("mana-blocks").value = character.manaBlocks;
+        // Atualiza UI
+        const setVal = (id, val) => {
+            const el = document.getElementById(id);
+            if (el) el.value = val;
+        };
+        setVal("char-name", character.name);
+        setVal("hp-current", character.hpCurrent);
+        setVal("hp-max", character.hpMax);
+        setVal("sanity-current", character.sanityCurrent);
+        setVal("sanity-max", character.sanityMax);
+        setVal("mana-blocks", character.manaBlocks);
 
         renderSkills();
         renderAttacks();
-        updateBars(); // se você tiver as barras de vida/sanidade
 
-        // ✅ MUDA O TEXTO DO BOTÃO PARA "ATUALIZAR"
-        const saveBtn = document.getElementById("save-character");
-        if (saveBtn && character.id) {
-            saveBtn.textContent = "🔄 Atualizar Ficha";
-            saveBtn.title = "Atualizar personagem no banco de dados";
-        }
-
-        // Vai para a aba de criação
-        document.querySelector('.nav-btn[data-page="character"]').click();
-        alert("✅ Personagem carregado!");
+        // ✅ Atualiza botão
         atualizarBotaoSalvar();
+
+        // Vai para aba de criação
+        const charTab = document.querySelector('.nav-btn[data-page="character"]');
+        if (charTab) charTab.click();
+
     } catch (err) {
         console.error(err);
         alert("❌ Erro ao carregar personagem.");
@@ -771,13 +756,19 @@ function atualizarBotaoSalvar() {
 }
 
 async function salvarPersonagem() {
+    if (!character.name?.trim()) {
+        alert("❌ Nome é obrigatório.");
+        return;
+    }
+
+    // ✅ Envia APENAS os campos que o backend aceita sem erro
     const personagem = {
-        name: character.name,
-        hpCurrent: character.hpCurrent,
-        hpMax: character.hpMax,
-        sanityCurrent: character.sanityCurrent,
-        sanityMax: character.sanityMax,
-        manaBlocks: character.manaBlocks,
+        name: character.name.trim(),
+        hp_current: Number(character.hpCurrent) || 100,
+        hp_max: Number(character.hpMax) || 100,
+        sanity_current: Number(character.sanityCurrent) || 100,
+        sanity_max: Number(character.sanityMax) || 100,
+        mana_blocks: Number(character.manaBlocks) || 0,
         skills: character.skills,
         attacks: attacks
     };
@@ -792,70 +783,56 @@ async function salvarPersonagem() {
         const data = await res.json();
 
         if (!res.ok) {
-            alert(data.erro || "Erro ao salvar personagem");
+            const msg = data.erro || data.message || "Erro ao salvar";
+            console.error("Erro do backend:", data);
+            alert("❌ " + msg);
             return;
         }
 
-        // ✅ 1. Salva o ID retornado pelo backend
-        if (data.id) {
-            character.id = data.id;
-        }
-        
-        if (character.id) {
-            // Cria uma versão "salvável" do personagem para a lista local
-            const personagemParaLista = {
-                id: character.id,
-                name: character.name,
-                hp_current: character.hpCurrent,
-                hp_max: character.hpMax,
-                sanity_current: character.sanityCurrent,
-                sanity_max: character.sanityMax,
-                mana_blocks: character.manaBlocks,
-                skills: Object.entries(character.skills).map(([name, value]) => ({ name, value })),
-                attacks: attacks.map(atk => ({
-                    name: atk.name || 'Ataque',
-                    description: atk.desc || '',
-                    flat_damage: atk.flat || 0,
-                    dice: (atk.dice || []).map(d => ({
-                        quantity: d.qty || 1,
-                        sides: d.sides || 6
-                    }))
+        // ✅ Define o ID
+        character.id = data.id;
+
+        // ✅ Cria cópia COM skills/attacks para a lista local (só no frontend)
+        const personagemParaLista = {
+            id: character.id,
+            name: character.name,
+            hp_current: character.hpCurrent,
+            hp_max: character.hpMax,
+            sanity_current: character.sanityCurrent,
+            sanity_max: character.sanityMax,
+            mana_blocks: character.manaBlocks,
+            skills: Object.entries(character.skills).map(([name, value]) => ({ name, value })),
+            attacks: attacks.map(atk => ({
+                name: atk.name || 'Ataque',
+                description: atk.desc || '',
+                flat_damage: atk.flat || 0,
+                dice: (atk.dice || []).map(d => ({
+                    quantity: d.qty || 1,
+                    sides: d.sides || 6
                 }))
-            };
+                }))
+        };
 
-            // Adiciona ao Map local
-            loadedCharacters.set(character.id, personagemParaLista);
+        loadedCharacters.set(character.id, personagemParaLista);
+        saveLoadedCharactersToStorage();
 
-            // Salva no localStorage
-            saveLoadedCharactersToStorage();
-
-            // Atualiza a visualização (se estiver na aba de salvos)
-            if (document.getElementById("saved-characters")?.classList.contains("active")) {
-                renderLoadedCharacters();
-            }
-        }
-
-        // ✅ 2. Atualiza o botão para "Atualizar Ficha"
+        // ✅ Atualiza interface
         atualizarBotaoSalvar();
-
-        // ✅ 3. Redireciona para a aba "Personagens Salvos"
         const savedTab = document.querySelector('.nav-btn[data-page="saved-characters"]');
         if (savedTab) {
-            // Remove 'active' de todas as abas
             document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-            // Ativa a aba correta
             savedTab.classList.add('active');
             document.getElementById('saved-characters')?.classList.add('active');
+            renderLoadedCharacters();
         }
 
         alert("✅ Personagem salvo com sucesso!");
     } catch (e) {
-        console.error(e);
-        alert("❌ Erro ao conectar com o backend");
+        console.error("Erro de rede:", e);
+        alert("❌ Falha de conexão.");
     }
 }
-
 // ==========================
 // LISTA DE PERSONAGENS SALVOS
 // ==========================
